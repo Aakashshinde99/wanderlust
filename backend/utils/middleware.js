@@ -1,6 +1,8 @@
+import pkg from 'express';
+const { Request, Response } = pkg;
+
 import { retrieveDataFromCache } from './cache-posts.js';
 import { HTTP_STATUS } from './constants.js';
-import { Request, Response } from 'express';
 
 export const cacheHandler = (key) => async (req, res, next) => {
   try {
