@@ -1,8 +1,11 @@
+import express from 'express'; // Import the express module
+const { Request, Response, NextFunction } = express; // Destructure the types from express
+
+// Your other imports
 import Post from '../models/post.js';
 import User from '../models/user.js';
 import { deleteDataFromCache, storeDataInCache } from '../utils/cache-posts.js';
 import { HTTP_STATUS, REDIS_KEYS, RESPONSE_MESSAGES, validCategories } from '../utils/constants.js';
-import { Request, Response, NextFunction } from 'express';
 
 export const createPostHandler = async (req, res) => {
   try {
@@ -65,6 +68,10 @@ export const createPostHandler = async (req, res) => {
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: err.message });
   }
 };
+
+// ... (other handlers remain unchanged)
+
+
 
 export const getAllPostsHandler = async (req, res) => {
   try {
