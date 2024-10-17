@@ -1,7 +1,7 @@
 import { createClient } from 'redis';
 import { REDIS_URL } from '../config/utils.js';
 
-let redis: any = null;
+let redis= null;
 export async function connectToRedis() {
   try {
     if (REDIS_URL) {
