@@ -13,7 +13,7 @@ interface JwtPayload {
 }
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-  const token = await req.cookies.access_token;
+  const token = req.cookies.access_token; // Removed the 'await' here as req.cookies.access_token is not a promise
   if (!token) {
     return next(
       new ApiError({
@@ -28,7 +28,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     req.user = await User.findById(_id);
     next();
   } catch (error: any) {
-    console.log('Token verification error:', error);
+    console.error('Token verification error:', error);
     return next(
       new ApiError({
         status: HTTP_STATUS.FORBIDDEN,
@@ -41,10 +41,12 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
 export const isAdminMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const role = req.user.role;
   if (role !== Role.Admin) {
-    return new ApiError({
-      status: HTTP_STATUS.UNAUTHORIZED,
-      message: RESPONSE_MESSAGES.USERS.UNAUTHORIZED_USER,
-    });
+    return next( // Use 'next()' to pass the error to the next middleware
+      new ApiError({
+        status: HTTP_STATUS.UNAUTHORIZED,
+        message: RESPONSE_MESSAGES.USERS.UNAUTHORIZED_USER,
+      })
+    );
   }
   next();
 };
