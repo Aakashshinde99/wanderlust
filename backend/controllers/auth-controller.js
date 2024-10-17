@@ -1,3 +1,7 @@
+import express from 'express'; // Import the express module
+const { NextFunction } = express; // Destructure NextFunction
+
+// Your other imports
 import User from '../models/user.js';
 import jwt from 'jsonwebtoken';
 import { HTTP_STATUS, RESPONSE_MESSAGES } from '../utils/constants.js';
@@ -6,7 +10,6 @@ import { JWT_SECRET } from '../config/utils.js';
 import { ApiError } from '../utils/api-error.js';
 import { ApiResponse } from '../utils/api-response.js';
 import { asyncHandler } from '../utils/async-handler.js';
-import { NextFunction } from 'express'; // No need to import `Request` and `Response` in JS
 
 //REGULAR EMAIL PASSWORD STRATEGY
 //1. Sign Up
@@ -77,6 +80,10 @@ export const signUpWithEmail = asyncHandler(async (req, res) => {
       )
     );
 });
+
+// ... (other functions remain unchanged)
+
+
 
 //2. Sign In
 export const signInWithEmailOrUsername = asyncHandler(async (req, res) => {
