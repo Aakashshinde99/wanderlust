@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { authMiddleware } from '../middlewares/auth-middleware.js';
 import passport from '../config/passport.js';
 import jwt from 'jsonwebtoken';
-import { Request, Response } from 'express';
 import {
   signUpWithEmail,
   signInWithEmailOrUsername,
@@ -12,7 +11,7 @@ import {
 
 const router = Router();
 
-//REGULAR EMAIL PASSWORD STRATEGY
+// REGULAR EMAIL PASSWORD STRATEGY
 router.post('/email-password/signup', signUpWithEmail);
 router.post('/email-password/signin', signInWithEmailOrUsername);
 
@@ -22,7 +21,7 @@ router.get('/google', passport.authenticate('google', { scope: ['profile', 'emai
 router.get(
   '/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),
-  (req: Request, res: Response) => {
+  (req, res) => {
     let token = '';
     if (process.env.JWT_SECRET) {
       token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -47,10 +46,10 @@ router.get('/check', authMiddleware, (req, res) => {
   });
 });
 
-//SIGN OUT
+// SIGN OUT
 router.post('/signout', authMiddleware, signOutUser);
 
-//CHECK USER STATUS
+// CHECK USER STATUS
 router.get('/check/:_id', authMiddleware, isLoggedIn);
 
 export default router;
