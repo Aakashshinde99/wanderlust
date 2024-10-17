@@ -2,7 +2,7 @@ import Post from '../models/post.js';
 import { HTTP_STATUS, RESPONSE_MESSAGES } from '../utils/constants.js';
 import { Request, Response, NextFunction } from 'express';
 
-export const isAuthorMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+export const isAuthorMiddleware = async (req, res, next) => {
   try {
     const userId = req.user._id;
     const postId = req.params.id;
@@ -18,7 +18,7 @@ export const isAuthorMiddleware = async (req: Request, res: Response, next: Next
         .json({ message: RESPONSE_MESSAGES.POSTS.NOT_ALLOWED });
     }
     next();
-  } catch (error: any) {
+  } catch (error) {
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: error.message });
   }
 };
