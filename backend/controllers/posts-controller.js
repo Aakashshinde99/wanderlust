@@ -3,6 +3,7 @@ import User from '../models/user.js';
 import { deleteDataFromCache, storeDataInCache } from '../utils/cache-posts.js';
 import { HTTP_STATUS, REDIS_KEYS, RESPONSE_MESSAGES, validCategories } from '../utils/constants.js';
 import { Request, Response, NextFunction } from 'express';
+
 export const createPostHandler = async (req: Request, res: Response) => {
   try {
     const {
@@ -47,19 +48,21 @@ export const createPostHandler = async (req: Request, res: Response) => {
       authorId: req.user._id,
     });
 
-    const [savedPost] = await Promise.all([
-      post.save(), // Save the post
-      deleteDataFromCache(REDIS_KEYS.ALL_POSTS), // Invalidate cache for all posts
-      deleteDataFromCache(REDIS_KEYS.FEATURED_POSTS), // Invalidate cache for featured posts
-      deleteDataFromCache(REDIS_KEYS.LATEST_POSTS), // Invalidate cache for latest posts
+    const savedPost = await post.save();
+    
+    // Invalidate cache for posts
+    await Promise.all([
+      deleteDataFromCache(REDIS_KEYS.ALL_POSTS),
+      deleteDataFromCache(REDIS_KEYS.FEATURED_POSTS),
+      deleteDataFromCache(REDIS_KEYS.LATEST_POSTS),
     ]);
 
-    // updating user doc to include the ObjectId of the created post
+    // Updating user doc to include the ObjectId of the created post
     await User.findByIdAndUpdate(userId, { $push: { posts: savedPost._id } });
 
     res.status(HTTP_STATUS.OK).json(savedPost);
   } catch (err: any) {
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: err });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: err.message });
   }
 };
 
@@ -135,11 +138,15 @@ export const updatePostHandler = async (req: Request, res: Response) => {
     if (!updatedPost) {
       return res.status(HTTP_STATUS.NOT_FOUND).json({ message: RESPONSE_MESSAGES.POSTS.NOT_FOUND });
     }
-    // invalidate the redis cache
-    await deleteDataFromCache(REDIS_KEYS.ALL_POSTS),
-      await deleteDataFromCache(REDIS_KEYS.FEATURED_POSTS),
-      await deleteDataFromCache(REDIS_KEYS.LATEST_POSTS),
-      await res.status(HTTP_STATUS.OK).json(updatedPost);
+
+    // Invalidate the cache for posts
+    await Promise.all([
+      deleteDataFromCache(REDIS_KEYS.ALL_POSTS),
+      deleteDataFromCache(REDIS_KEYS.FEATURED_POSTS),
+      deleteDataFromCache(REDIS_KEYS.LATEST_POSTS),
+    ]);
+
+    res.status(HTTP_STATUS.OK).json(updatedPost);
   } catch (err: any) {
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: err.message });
   }
@@ -153,13 +160,17 @@ export const deletePostByIdHandler = async (req: Request, res: Response) => {
     if (!post) {
       return res.status(HTTP_STATUS.NOT_FOUND).json({ message: RESPONSE_MESSAGES.POSTS.NOT_FOUND });
     }
+
     await User.findByIdAndUpdate(post.authorId, { $pull: { posts: req.params.id } });
 
-    // invalidate the redis cache
-    await deleteDataFromCache(REDIS_KEYS.ALL_POSTS),
-      await deleteDataFromCache(REDIS_KEYS.FEATURED_POSTS),
-      await deleteDataFromCache(REDIS_KEYS.LATEST_POSTS),
-      res.status(HTTP_STATUS.OK).json({ message: RESPONSE_MESSAGES.POSTS.DELETED });
+    // Invalidate the cache for posts
+    await Promise.all([
+      deleteDataFromCache(REDIS_KEYS.ALL_POSTS),
+      deleteDataFromCache(REDIS_KEYS.FEATURED_POSTS),
+      deleteDataFromCache(REDIS_KEYS.LATEST_POSTS),
+    ]);
+
+    res.status(HTTP_STATUS.OK).json({ message: RESPONSE_MESSAGES.POSTS.DELETED });
   } catch (err: any) {
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: err.message });
   }
