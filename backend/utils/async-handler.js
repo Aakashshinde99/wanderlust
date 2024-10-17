@@ -1,4 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
+import express from 'express'; // Import the express module
+const { Request, Response, NextFunction } = express; // Destructure types
 
 export const asyncHandler = (func) => {
   return (req, res, next) => {
