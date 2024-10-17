@@ -2,17 +2,13 @@ import { JWT_SECRET } from '../config/utils.js';
 import { ApiError } from '../utils/api-error.js';
 import { HTTP_STATUS, RESPONSE_MESSAGES } from '../utils/constants.js';
 import jwt from 'jsonwebtoken';
-import { Role } from '../types/role-type.js';
 import User from '../models/user.js';
-
 import { Request, Response, NextFunction } from 'express';
-import { ObjectId } from 'mongoose';
 
-interface JwtPayload {
-  _id: ObjectId;
-}
+// Removed TypeScript interface declaration and ObjectId import
+// For a MongoDB ObjectId, you can work with it as a string if needed
 
-export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+export const authMiddleware = async (req, res, next) => { // Removed TypeScript types
   const token = req.cookies.access_token; // Removed the 'await' here as req.cookies.access_token is not a promise
   if (!token) {
     return next(
@@ -24,10 +20,12 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
   }
 
   try {
-    const { _id } = jwt.verify(token, JWT_SECRET as string) as JwtPayload;
+    // Removed Type Assertion 'as JwtPayload' 
+    const decodedToken = jwt.verify(token, JWT_SECRET); 
+    const _id = decodedToken._id; // _id can be treated as a string if needed
     req.user = await User.findById(_id);
     next();
-  } catch (error: any) {
+  } catch (error) {
     console.error('Token verification error:', error);
     return next(
       new ApiError({
@@ -38,10 +36,10 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-export const isAdminMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+export const isAdminMiddleware = async (req, res, next) => { // Removed TypeScript types
   const role = req.user.role;
-  if (role !== Role.Admin) {
-    return next( // Use 'next()' to pass the error to the next middleware
+  if (role !== 'Admin') { // Use 'Admin' as a string instead of Role.Admin
+    return next(
       new ApiError({
         status: HTTP_STATUS.UNAUTHORIZED,
         message: RESPONSE_MESSAGES.USERS.UNAUTHORIZED_USER,
