@@ -3,7 +3,10 @@ import { ApiError } from '../utils/api-error.js';
 import { HTTP_STATUS, RESPONSE_MESSAGES } from '../utils/constants.js';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
-import { Request, Response, NextFunction } from 'express';
+import express from 'express'; // Default import of express
+
+// Destructure the types from the imported express module
+const { Request, Response, NextFunction } = express;
 
 export const authMiddleware = async (req, res, next) => {
   const token = req.cookies.access_token; // Access the token from cookies
@@ -17,7 +20,7 @@ export const authMiddleware = async (req, res, next) => {
   }
 
   try {
-    const decodedToken = jwt.verify(token, JWT_SECRET); 
+    const decodedToken = jwt.verify(token, JWT_SECRET);
     const _id = decodedToken._id; // Extract user ID from decoded token
     req.user = await User.findById(_id); // Find user by ID and attach to request object
     next(); // Call the next middleware
