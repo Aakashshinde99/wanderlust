@@ -1,9 +1,9 @@
 import { HTTP_STATUS, RESPONSE_MESSAGES } from '../utils/constants.js';
 import User from '../models/user.js';
-import { Role } from '../types/role-type.js';
+import { Role } from '../types/role-type.js'; // If this file is a TypeScript file, consider adjusting your import or converting it to JS.
 import { Request, Response } from 'express';
 
-export const getAllUserHandler = async (req: Request, res: Response) => {
+export const getAllUserHandler = async (req, res) => {
   try {
     const users = await User.find().select('_id fullName role email');
     return res.status(HTTP_STATUS.OK).json({ users });
@@ -15,7 +15,7 @@ export const getAllUserHandler = async (req: Request, res: Response) => {
   }
 };
 
-export const changeUserRoleHandler = async (req: Request, res: Response) => {
+export const changeUserRoleHandler = async (req, res) => {
   try {
     const userId = req.params.userId;
     const { role } = req.body;
@@ -48,7 +48,7 @@ export const changeUserRoleHandler = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteUserHandler = async (req: Request, res: Response) => {
+export const deleteUserHandler = async (req, res) => {
   try {
     const userId = req.params.userId;
     const user = await User.findByIdAndDelete(userId);
