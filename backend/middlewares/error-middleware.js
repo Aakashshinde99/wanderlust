@@ -8,7 +8,7 @@ const errorMiddleware = (err: any, req: Request, res: Response, next: NextFuncti
     message: err.message || RESPONSE_MESSAGES.COMMON.INTERNAL_SERVER_ERROR,
     errors: err.errors || [],
   });
-  next();
+  // Removed the next() call to prevent attempting to send another response
 };
 
 export default errorMiddleware;
