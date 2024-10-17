@@ -1,7 +1,9 @@
+import pkg from 'express';
+const { Request, Response } = pkg;
+
 import { HTTP_STATUS, RESPONSE_MESSAGES } from '../utils/constants.js';
 import User from '../models/user.js';
 import { Role } from '../types/role-type.js'; // If this file is a TypeScript file, consider adjusting your import or converting it to JS.
-import { Request, Response } from 'express';
 
 export const getAllUserHandler = async (req, res) => {
   try {
