@@ -5,11 +5,8 @@ import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
 import { Request, Response, NextFunction } from 'express';
 
-// Removed TypeScript interface declaration and ObjectId import
-// For a MongoDB ObjectId, you can work with it as a string if needed
-
-export const authMiddleware = async (req, res, next) => { // Removed TypeScript types
-  const token = req.cookies.access_token; // Removed the 'await' here as req.cookies.access_token is not a promise
+export const authMiddleware = async (req, res, next) => {
+  const token = req.cookies.access_token; // Access the token from cookies
   if (!token) {
     return next(
       new ApiError({
@@ -20,11 +17,10 @@ export const authMiddleware = async (req, res, next) => { // Removed TypeScript 
   }
 
   try {
-    // Removed Type Assertion 'as JwtPayload' 
     const decodedToken = jwt.verify(token, JWT_SECRET); 
-    const _id = decodedToken._id; // _id can be treated as a string if needed
-    req.user = await User.findById(_id);
-    next();
+    const _id = decodedToken._id; // Extract user ID from decoded token
+    req.user = await User.findById(_id); // Find user by ID and attach to request object
+    next(); // Call the next middleware
   } catch (error) {
     console.error('Token verification error:', error);
     return next(
@@ -36,9 +32,9 @@ export const authMiddleware = async (req, res, next) => { // Removed TypeScript 
   }
 };
 
-export const isAdminMiddleware = async (req, res, next) => { // Removed TypeScript types
-  const role = req.user.role;
-  if (role !== 'Admin') { // Use 'Admin' as a string instead of Role.Admin
+export const isAdminMiddleware = async (req, res, next) => {
+  const role = req.user.role; // Get the user role from the request object
+  if (role !== 'Admin') { // Check if the user role is 'Admin'
     return next(
       new ApiError({
         status: HTTP_STATUS.UNAUTHORIZED,
@@ -46,5 +42,5 @@ export const isAdminMiddleware = async (req, res, next) => { // Removed TypeScri
       })
     );
   }
-  next();
+  next(); // Call the next middleware
 };
