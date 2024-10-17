@@ -6,12 +6,11 @@ import { JWT_SECRET } from '../config/utils.js';
 import { ApiError } from '../utils/api-error.js';
 import { ApiResponse } from '../utils/api-response.js';
 import { asyncHandler } from '../utils/async-handler.js';
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction } from 'express'; // No need to import `Request` and `Response` in JS
 
 //REGULAR EMAIL PASSWORD STRATEGY
-//1.Sign Up
-
-export const signUpWithEmail = asyncHandler(async (req: Request, res: Response) => {
+//1. Sign Up
+export const signUpWithEmail = asyncHandler(async (req, res) => {
   const { userName, fullName, email, password } = req.body;
   if (!userName || !fullName || !email || !password) {
     throw new ApiError({
@@ -48,10 +47,10 @@ export const signUpWithEmail = asyncHandler(async (req: Request, res: Response) 
 
   try {
     await user.validate();
-  } catch (error: any) {
-    const validationErrors: any = [];
+  } catch (error) {
+    const validationErrors = [];
     for (const key in error.errors) {
-      validationErrors.push(error.errors[key].message as never);
+      validationErrors.push(error.errors[key].message);
     }
     throw new ApiError({
       status: HTTP_STATUS.BAD_REQUEST,
@@ -63,9 +62,8 @@ export const signUpWithEmail = asyncHandler(async (req: Request, res: Response) 
   const refreshToken = await user.generateRefreshToken();
 
   user.refreshToken = refreshToken;
-
   await user.save();
-  user.password = undefined;
+  user.password = undefined; // Hide password before sending user object
 
   res
     .status(HTTP_STATUS.OK)
@@ -74,18 +72,14 @@ export const signUpWithEmail = asyncHandler(async (req: Request, res: Response) 
     .json(
       new ApiResponse(
         HTTP_STATUS.OK,
-        {
-          accessToken,
-          refreshToken,
-          user,
-        },
+        { accessToken, refreshToken, user },
         RESPONSE_MESSAGES.USERS.SIGNED_UP
       )
     );
 });
 
-//2.Sign In
-export const signInWithEmailOrUsername = asyncHandler(async (req: Request, res: Response) => {
+//2. Sign In
+export const signInWithEmailOrUsername = asyncHandler(async (req, res) => {
   const { userNameOrEmail, password } = req.body;
   if (!userNameOrEmail || !password) {
     throw new ApiError({
@@ -113,12 +107,13 @@ export const signInWithEmailOrUsername = asyncHandler(async (req: Request, res: 
       message: RESPONSE_MESSAGES.USERS.INVALID_PASSWORD,
     });
   }
+
   const accessToken = await user.generateAccessToken();
   const refreshToken = await user.generateRefreshToken();
 
   user.refreshToken = refreshToken;
   await user.save();
-  user.password = undefined;
+  user.password = undefined; // Hide password before sending user object
 
   res
     .status(HTTP_STATUS.OK)
@@ -127,32 +122,23 @@ export const signInWithEmailOrUsername = asyncHandler(async (req: Request, res: 
     .json(
       new ApiResponse(
         HTTP_STATUS.OK,
-        {
-          accessToken,
-          refreshToken,
-          user,
-        },
+        { accessToken, refreshToken, user },
         RESPONSE_MESSAGES.USERS.SIGNED_IN
       )
     );
 });
 
-//Sign Out
-export const signOutUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+//3. Sign Out
+export const signOutUser = asyncHandler(async (req, res, next) => {
   await User.findByIdAndUpdate(
     req.user?._id,
     {
-      $set: {
-        refreshToken: '',
-      },
+      $set: { refreshToken: '' },
     },
-    {
-      new: true,
-    }
+    { new: true }
   );
 
-  // Passport.js logout
-  req.logout((err: any) => {
+  req.logout((err) => {
     if (err) {
       return next(
         new ApiError({
@@ -170,8 +156,9 @@ export const signOutUser = asyncHandler(async (req: Request, res: Response, next
       .json(new ApiResponse(HTTP_STATUS.OK, '', RESPONSE_MESSAGES.USERS.SIGNED_OUT));
   });
 });
-// check user
-export const isLoggedIn = asyncHandler(async (req: Request, res: Response) => {
+
+//4. Check User
+export const isLoggedIn = asyncHandler(async (req, res) => {
   let access_token = req.cookies?.access_token;
   let refresh_token = req.cookies?.refresh_token;
   const { _id } = req.params;
@@ -181,6 +168,7 @@ export const isLoggedIn = asyncHandler(async (req: Request, res: Response) => {
       .status(HTTP_STATUS.BAD_REQUEST)
       .json(new ApiResponse(HTTP_STATUS.BAD_REQUEST, '', 'User ID is required'));
   }
+
   if (access_token) {
     try {
       if (JWT_SECRET) {
@@ -189,11 +177,11 @@ export const isLoggedIn = asyncHandler(async (req: Request, res: Response) => {
       return res
         .status(HTTP_STATUS.OK)
         .json(new ApiResponse(HTTP_STATUS.OK, access_token, RESPONSE_MESSAGES.USERS.VALID_TOKEN));
-    } catch (error: any) {
+    } catch (error) {
       console.log('Access token verification error:', error.message);
     }
   }
-  // If access token is not valid, check the refresh token
+
   if (refresh_token) {
     try {
       if (JWT_SECRET) {
@@ -203,21 +191,18 @@ export const isLoggedIn = asyncHandler(async (req: Request, res: Response) => {
       if (!user) {
         return res
           .status(HTTP_STATUS.NOT_FOUND)
-          .json(
-            new ApiResponse(HTTP_STATUS.NOT_FOUND, '', RESPONSE_MESSAGES.USERS.USER_NOT_EXISTS)
-          );
+          .json(new ApiResponse(HTTP_STATUS.NOT_FOUND, '', RESPONSE_MESSAGES.USERS.USER_NOT_EXISTS));
       }
       access_token = await user.generateAccessToken();
       return res
         .status(HTTP_STATUS.OK)
         .cookie('access_token', access_token, cookieOptions)
         .json(new ApiResponse(HTTP_STATUS.OK, access_token, RESPONSE_MESSAGES.USERS.VALID_TOKEN));
-    } catch (error: any) {
+    } catch (error) {
       console.log('Refresh token verification error:', error.message);
     }
   }
 
-  // If neither token is valid, handle accordingly
   const user = await User.findById(_id);
   if (!user) {
     return res
@@ -247,15 +232,9 @@ export const isLoggedIn = asyncHandler(async (req: Request, res: Response) => {
       .cookie('access_token', access_token, cookieOptions)
       .cookie('refresh_token', refresh_token, cookieOptions)
       .json(new ApiResponse(HTTP_STATUS.OK, access_token, RESPONSE_MESSAGES.USERS.VALID_TOKEN));
-  } catch (error: any) {
+  } catch (error) {
     return res
       .status(HTTP_STATUS.UNAUTHORIZED)
-      .json(
-        new ApiResponse(
-          HTTP_STATUS.UNAUTHORIZED,
-          error.message,
-          RESPONSE_MESSAGES.USERS.INVALID_TOKEN
-        )
-      );
+      .json(new ApiResponse(HTTP_STATUS.UNAUTHORIZED, error.message, RESPONSE_MESSAGES.USERS.INVALID_TOKEN));
   }
 });
