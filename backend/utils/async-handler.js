@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
-export const asyncHandler = (func: any) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const asyncHandler = (func) => {
+  return (req, res, next) => {
     Promise.resolve(func(req, res, next)).catch((err) => next(err));
   };
 };
